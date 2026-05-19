@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Щоденник сечового</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
+  --text:#e6edf3;--muted:#7d8590;--plus:#3fb950;--minus:#f85149;
+  --pm:#d29922;--accent:#58a6ff;--total:#bb8fce;--water:#79c0ff;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{overscroll-behavior:none;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;min-height:100vh;padding-bottom:60px;-webkit-text-size-adjust:100%;}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+header h1{font-size:12px;font-weight:600;color:var(--accent);letter-spacing:.05em;text-transform:uppercase;}
+.badge{font-size:11px;color:var(--muted);background:var(--surface2);padding:4px 10px;border-radius:20px;border:1px solid var(--border);}
+.main{max-width:640px;margin:0 auto;padding:16px 12px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;}
+.sec{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;}
+.warn{background:rgba(248,81,73,.1);border:1px solid var(--minus);color:#ffb3ae;padding:10px 12px;border-radius:8px;font-size:11px;line-height:1.5;margin-bottom:12px;display:none;}
+.warn.show{display:block;}
+.hints{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.hint{font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--muted);background:var(--surface2);}
+.vbtn{width:100%;height:68px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:all .2s;touch-action:manipulation;}
+.vbtn:active{transform:scale(.98);}
+.vbtn.on{border-color:var(--minus);background:rgba(248,81,73,.08);color:var(--minus);animation:pulse 1.2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(248,81,73,.3);}50%{box-shadow:0 0 0 10px rgba(248,81,73,0);}}
+.trs{margin-top:10px;min-height:36px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--muted);line-height:1.6;}
+.trs.on{color:var(--text);border-color:var(--accent);}
+.preview{display:none;margin-top:10px;background:var(--bg);border:1px solid var(--plus);border-radius:8px;padding:10px 13px;flex-wrap:wrap;gap:7px;}
+.preview.show{display:flex;}
+.chip{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);}
+.cl{color:var(--muted);margin-right:4px;}
+.cp{border-color:var(--plus);color:var(--plus);}
+.cm{border-color:var(--minus);color:var(--minus);}
+.cpm{border-color:var(--pm);color:var(--pm);}
+.ct{border-color:var(--accent);color:var(--accent);}
+.cw{border-color:var(--water);color:var(--water);}
+.cbtn{display:none;width:100%;margin-top:10px;height:44px;background:var(--plus);border:none;border-radius:8px;color:#0d1117;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;}
+.cbtn.show{display:block;}
+.cbtn:active{opacity:.85;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.fg label{display:block;font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;}
+.fg input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;font-size:14px;padding:9px 9px;outline:none;-webkit-appearance:none;appearance:none;}
+.fg input:focus{border-color:var(--accent);}
+.fbrow{display:flex;gap:6px;margin-bottom:10px;}
+.fb{flex:1;height:40px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--muted);font-family:inherit;font-size:16px;cursor:pointer;touch-action:manipulation;}
+.fb.ap{border-color:var(--plus);color:var(--plus);background:rgba(63,185,80,.1);}
+.fb.am{border-color:var(--minus);color:var(--minus);background:rgba(248,81,73,.1);}
+.fb.apm{border-color:var(--pm);color:var(--pm);background:rgba(210,153,34,.1);}
+.addbtn{width:100%;height:44px;background:var(--accent);border:none;border-radius:8px;color:#0d1117;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;}
+.addbtn:active{opacity:.85;}
+.tcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.thead2{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);gap:8px;flex-wrap:wrap;}
+.tbtn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;font-size:11px;padding:7px 12px;cursor:pointer;touch-action:manipulation;}
+.tbtn:active{border-color:var(--accent);}
+.clr{background:transparent;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:inherit;padding:7px 8px;touch-action:manipulation;}
+.rc{font-size:11px;color:var(--muted);background:var(--surface2);padding:3px 10px;border-radius:20px;border:1px solid var(--border);}
+
+/* table — mobile-first, no horizontal scroll */
+.tbl{width:100%;}
+.trow{display:grid;grid-template-columns:42px 1fr 1fr 32px 60px 60px 32px;gap:4px;align-items:stretch;padding:2px 8px;border-bottom:1px solid rgba(48,54,61,.4);min-height:44px;}
+.trow.head{background:var(--surface2);border-bottom:1px solid var(--border);min-height:32px;}
+.trow.head .tc{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;align-self:center;padding:6px 2px;}
+.tc{display:flex;align-items:center;padding:6px 2px;font-size:12px;min-height:40px;}
+.tc.ddate{color:var(--accent);font-weight:600;font-size:11px;}
+.tc.cnt{color:var(--muted);font-size:10px;justify-content:flex-end;}
+.tc.dp{color:var(--plus);font-size:16px;font-weight:600;justify-content:center;}
+.tc.dm{color:var(--minus);font-size:16px;font-weight:600;justify-content:center;}
+.tc.dpm{color:var(--pm);font-size:14px;justify-content:center;}
+.tc.dw{color:var(--water);justify-content:flex-end;}
+.tc.vol{justify-content:flex-end;}
+.tc.del{color:var(--border);justify-content:center;font-size:16px;cursor:pointer;touch-action:manipulation;}
+.tc.del:active{color:var(--minus);}
+.tc.editable{cursor:pointer;border-radius:4px;}
+.tc.editable:active{background:rgba(88,166,255,.12);}
+.trow.tot{background:rgba(187,143,206,.07);border-top:1px solid rgba(187,143,206,.2);border-bottom:2px solid rgba(187,143,206,.25);}
+.trow.tot .tc{color:var(--total);font-weight:600;font-size:10px;}
+.trow.tot .tc.dw{color:var(--water);}
+
+.tc input,.tc select{
+  width:100%;background:var(--surface2);border:1.5px solid var(--accent);border-radius:4px;
+  color:var(--text);font-family:inherit;font-size:13px;padding:6px 6px;outline:none;
+  -webkit-appearance:none;appearance:none;
+}
+.tc select{background-image:none;}
+
+.empty{text-align:center;padding:48px 20px;color:var(--muted);font-size:12px;line-height:2.2;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--plus);color:#0d1117;font-family:inherit;font-size:12px;font-weight:600;padding:10px 22px;border-radius:20px;transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:999;pointer-events:none;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.err{background:var(--minus);color:#fff;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⬡ Щоденник сечового</h1>
+  <div class="badge" id="dateBadge"></div>
+</header>
+
+<div class="main">
+
+  <div class="card">
+    <div class="sec">🎙 Голосовий ввід</div>
+    <div class="warn" id="warn"></div>
+    <div class="hints">
+      <span class="hint">«Початок 9:00»</span>
+      <span class="hint">«Кінець 9:45 плюс 200»</span>
+      <span class="hint">«Вода 500»</span>
+    </div>
+    <button class="vbtn" id="vbtn">
+      <span style="font-size:24px">🎤</span>
+      <span id="vbtntxt">Натисни та говори</span>
+    </button>
+    <div class="trs" id="trs">Очікування…</div>
+    <div class="preview" id="preview"></div>
+    <button class="cbtn" id="cbtn">✓ Підтвердити</button>
+  </div>
+
+  <div class="card">
+    <div class="sec">✏️ Ручний ввід</div>
+    <div class="grid3">
+      <div class="fg"><label>Дата</label><input id="iDate" maxlength="5" placeholder="19.05"></div>
+      <div class="fg"><label>Початок</label><input id="iStart" maxlength="5" placeholder="9:00" inputmode="numeric"></div>
+      <div class="fg"><label>Кінець</label><input id="iEnd" maxlength="5" placeholder="9:45" inputmode="numeric"></div>
+    </div>
+    <div class="grid2">
+      <div class="fg"><label>Об'єм мл</label><input type="number" id="iVol" inputmode="numeric" placeholder="250"></div>
+      <div class="fg"><label>Вода мл</label><input type="number" id="iWater" inputmode="numeric" placeholder=""></div>
+    </div>
+    <div class="fg" style="margin-bottom:10px">
+      <label>Відчуття</label>
+      <div class="fbrow">
+        <button class="fb" data-feel="+">+</button>
+        <button class="fb" data-feel="-">−</button>
+        <button class="fb" data-feel="±">±</button>
+      </div>
+    </div>
+    <button class="addbtn" id="addBtn">+ Додати рядок</button>
+  </div>
+
+  <div class="tcard">
+    <div class="thead2">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="sec" style="margin:0">Записи</div>
+        <span class="rc" id="rc">0</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="clr" id="clrBtn">очистити</button>
+        <button class="tbtn" id="csvBtn">⬇ CSV</button>
+        <button class="tbtn" id="htmlBtn">⬇ HTML</button>
+      </div>
+    </div>
+    <div id="tbl"><div class="empty">Немає записів<br>Говори або вводь вручну ↑</div></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+const KEY = 'bladder_v4';
+let recs = [];
+try { recs = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e){ recs = []; }
+
+const today = new Date();
+document.getElementById('dateBadge').textContent =
+  today.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+function todayStr(){
+  return String(today.getDate()).padStart(2,'0')+'.'+String(today.getMonth()+1).padStart(2,'0');
+}
+document.getElementById('iDate').value = todayStr();
+
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(recs)); }catch(e){ showToast('Помилка збереження','err'); } }
+
+// ── HTTPS / mic check ─────────────────────────────────────
+(function(){
+  const w = document.getElementById('warn');
+  const isSecure = location.protocol==='https:' || location.hostname==='localhost' || location.hostname==='127.0.0.1';
+  const hasSR = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+  if(location.protocol==='file:'){
+    w.innerHTML='⚠ Файл відкрито локально (file://). На iOS мікрофон <b>не працює</b> без HTTPS. Розмісти файл на GitHub Pages / Netlify / iCloud Web або використовуй ручний ввід.';
+    w.classList.add('show');
+  } else if(!isSecure){
+    w.innerHTML='⚠ Немає HTTPS. iOS Safari вимагає захищене з\'єднання для мікрофона.';
+    w.classList.add('show');
+  } else if(!hasSR){
+    w.innerHTML='⚠ Цей браузер не підтримує розпізнавання мови. Відкрий у Safari (iOS) або Chrome (desktop/Android).';
+    w.classList.add('show');
+  }
+})();
+
+// ── Feel buttons (manual) ─────────────────────────────────
+let selFeel='';
+document.querySelectorAll('.fbrow .fb[data-feel]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    selFeel = b.dataset.feel;
+    document.querySelectorAll('.fbrow .fb[data-feel]').forEach(x=>x.className='fb');
+    if(selFeel==='+') b.classList.add('ap');
+    else if(selFeel==='-') b.classList.add('am');
+    else if(selFeel==='±') b.classList.add('apm');
+  });
+});
+
+// ── Voice ─────────────────────────────────────────────────
+const vbtn = document.getElementById('vbtn');
+const vbtntxt = document.getElementById('vbtntxt');
+const trs = document.getElementById('trs');
+const preview = document.getElementById('preview');
+const cbtn = document.getElementById('cbtn');
+
+let recog=null, listening=false, parsed=null, finalText='', restartTimer=null;
+
+vbtn.addEventListener('click', toggleVoice);
+cbtn.addEventListener('click', confirmVoice);
+
+function toggleVoice(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ showToast('Браузер не підтримує мікрофон','err'); return; }
+  if(listening){ stopVoice(true); return; }
+  startVoice(SR);
+}
+
+function startVoice(SR){
+  finalText='';
+  parsed=null;
+  preview.classList.remove('show');
+  cbtn.classList.remove('show');
+
+  recog = new SR();
+  recog.lang = 'uk-UA';
+  recog.continuous = true;       // тримаємо запис відкритим
+  recog.interimResults = true;
+  recog.maxAlternatives = 1;
+
+  recog.onstart = ()=>{
+    listening = true;
+    vbtn.classList.add('on');
+    vbtntxt.textContent = 'Слухаю… натисни щоб зупинити';
+    trs.className = 'trs on';
+    trs.textContent = '…';
+  };
+  recog.onresult = (e)=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const t = e.results[i][0].transcript;
+      if(e.results[i].isFinal) finalText += ' ' + t;
+      else interim += t;
+    }
+    trs.textContent = (finalText + ' ' + interim).trim() || '…';
+  };
+  recog.onerror = (e)=>{
+    if(e.error==='no-speech' || e.error==='aborted') return;
+    showToast('Мікрофон: '+e.error,'err');
+    stopVoice(false);
+  };
+  recog.onend = ()=>{
+    // На iOS recognition обривається через ~5-10с тиші. Якщо ми ще хочемо слухати — перезапускаємо.
+    if(listening){
+      restartTimer = setTimeout(()=>{ try{ recog.start(); }catch(e){} }, 250);
+    } else {
+      // Користувач сам зупинив — парсимо те що є
+      if(finalText.trim()) processVoice(finalText.trim());
+    }
+  };
+
+  try { recog.start(); }
+  catch(e){ showToast('Не вдалось запустити мікрофон','err'); }
+}
+
+function stopVoice(parseNow){
+  listening = false;
+  clearTimeout(restartTimer);
+  if(recog){ try{ recog.stop(); }catch(e){} }
+  vbtn.classList.remove('on');
+  vbtntxt.textContent = 'Натисни та говори';
+  trs.className = 'trs';
+  if(parseNow && finalText.trim()){
+    processVoice(finalText.trim());
+  }
+}
+
+// ── Parsing helpers ───────────────────────────────────────
+const NUM_WORDS = {
+  'нуль':0,'один':1,'одна':1,'два':2,'дві':2,'три':3,'чотири':4,"п'ять":5,'пять':5,
+  'шість':6,'сім':7,'вісім':8,"дев'ять":9,'девять':9,'десять':10,
+  'одинадцять':11,'дванадцять':12,'тринадцять':13,'чотирнадцять':14,
+  "п'ятнадцять":15,'пятнадцять':15,'шістнадцять':16,'сімнадцять':17,
+  'вісімнадцять':18,"дев'ятнадцять":19,'девятнадцять':19,
+  'двадцять':20,'тридцять':30,'сорок':40,"п'ятдесят":50,'пятдесят':50,
+  'шістдесят':60,'сімдесят':70,'вісімдесят':80,"дев'яносто":90,'девяносто':90,
+  'сто':100,'двісті':200,'триста':300,'чотириста':400,"п'ятсот":500,'пятсот':500,
+  'шістсот':600,'сімсот':700,'вісімсот':800,"дев'ятсот":900,'девятсот':900,'тисяча':1000,
+  'перша':1,'друга':2,'третя':3,'четверта':4,"п'ята":5,'пята':5,
+  'шоста':6,'сьома':7,'восьма':8,"дев'ята":9,'девята':9,'десята':10,
+  'одинадцята':11,'дванадцята':12,'тринадцята':13,'чотирнадцята':14,
+  "п'ятнадцята":15,'пятнадцята':15,'шістнадцята':16,'сімнадцята':17,
+  'вісімнадцята':18,"дев'ятнадцята":19,'девятнадцята':19,'двадцята':20,
+  'двадцять перша':21,'двадцять друга':22,'двадцять третя':23,'двадцять четверта':24,
+};
+
+function wordsToNumber(text){
+  // повертає масив чисел знайдених у тексті (в порядку появи)
+  const out = [];
+  // 1) Прямі цифри
+  const digitMatches = [...text.matchAll(/\d+/g)];
+  digitMatches.forEach(m => out.push({pos:m.index, val:parseInt(m[0])}));
+
+  // 2) Слова — сканер
+  const tokens = text.split(/\s+/);
+  let pos = 0;
+  for(let i=0;i<tokens.length;i++){
+    const t = tokens[i].replace(/[.,!?]/g,'');
+    const t2 = (i+1<tokens.length) ? (t+' '+tokens[i+1].replace(/[.,!?]/g,'')) : null;
+    let val = null;
+    if(t2 && NUM_WORDS[t2]!=null){ val = NUM_WORDS[t2]; i++; }
+    else if(NUM_WORDS[t]!=null){ val = NUM_WORDS[t]; }
+
+    // Об'єднання типу "двадцять п'ять" → 25
+    if(val!=null && val>=20 && val<100 && val%10===0 && i+1<tokens.length){
+      const next = tokens[i+1].replace(/[.,!?]/g,'');
+      if(NUM_WORDS[next]!=null && NUM_WORDS[next]<10){ val += NUM_WORDS[next]; i++; }
+    }
+    // "сто двадцять", "двісті п'ятдесят"
+    if(val!=null && val>=100 && val<1000 && val%100===0 && i+1<tokens.length){
+      const next = tokens[i+1].replace(/[.,!?]/g,'');
+      if(NUM_WORDS[next]!=null && NUM_WORDS[next]<100 && NUM_WORDS[next]>0){
+        val += NUM_WORDS[next]; i++;
+      }
+    }
+    if(val!=null) out.push({pos, val});
+    pos += tokens[i] ? tokens[i].length+1 : 1;
+  }
+  return out;
+}
+
+// Витягує час із тексту. Повертає {time:'HH:MM', rest:'текст без часу'}.
+// rest потрібен щоб parseVol не схопив хвилини як об'єм.
+function parseTime(t){
+  // 1) "9:45" / "9.45" / "9 45" з роздільником
+  let m = t.match(/(\d{1,2})[:.\s](\d{2})(?!\d)/);
+  if(m){
+    const h = parseInt(m[1]), mn = parseInt(m[2]);
+    if(h<24 && mn<60){
+      return {
+        time: String(h).padStart(2,'0')+':'+String(mn).padStart(2,'0'),
+        rest: (t.slice(0,m.index)+' '+t.slice(m.index+m[0].length)).trim()
+      };
+    }
+  }
+  // 2) "0945" / "945"
+  m = t.match(/\b(\d{3,4})\b/);
+  if(m){
+    const s = m[1].padStart(4,'0');
+    const h = parseInt(s.slice(0,2)), mn = parseInt(s.slice(2));
+    if(h<24 && mn<60){
+      return {
+        time: s.slice(0,2)+':'+s.slice(2),
+        rest: (t.slice(0,m.index)+' '+t.slice(m.index+m[0].length)).trim()
+      };
+    }
+  }
+  // 3) Словами: "дев'ята сорок п'ять", "пів на десяту"
+  const tokens = t.split(/\s+/);
+  const clean = w => (w||'').replace(/[.,!?:]/g,'');
+  for(let i=0;i<tokens.length;i++){
+    const a = clean(tokens[i]);
+    const a2 = i+1<tokens.length ? a+' '+clean(tokens[i+1]) : '';
+    let hourVal=null, used=0;
+    if(NUM_WORDS[a2]!=null && NUM_WORDS[a2]<24){ hourVal=NUM_WORDS[a2]; used=2; }
+    else if(NUM_WORDS[a]!=null && NUM_WORDS[a]<24){ hourVal=NUM_WORDS[a]; used=1; }
+    if(hourVal==null) continue;
+
+    // Хвилини: 1-2 наступні токени
+    let minVal=0, mused=0;
+    const j = i+used;
+    if(j<tokens.length){
+      const b = clean(tokens[j]);
+      if(NUM_WORDS[b]!=null && NUM_WORDS[b]<60){
+        minVal=NUM_WORDS[b]; mused=1;
+        if(minVal>=20 && minVal<60 && minVal%10===0 && j+1<tokens.length){
+          const c = clean(tokens[j+1]);
+          if(NUM_WORDS[c]!=null && NUM_WORDS[c]<10){ minVal+=NUM_WORDS[c]; mused=2; }
+        }
+      }
+    }
+
+    // "пів на десяту" → 9:30
+    if(/пів\s+на/.test(t) && hourVal>0){
+      const consumed = new Set();
+      for(let k=i;k<i+used+mused;k++) consumed.add(k);
+      // знаходимо слова "пів" і "на" і викидаємо їх теж
+      tokens.forEach((tok,idx)=>{ const c=clean(tok); if(c==='пів'||c==='на') consumed.add(idx); });
+      return {
+        time: String(hourVal-1).padStart(2,'0')+':30',
+        rest: tokens.filter((_,idx)=>!consumed.has(idx)).join(' ').trim()
+      };
+    }
+
+    const consumed = new Set();
+    for(let k=i;k<i+used+mused;k++) consumed.add(k);
+    return {
+      time: String(hourVal).padStart(2,'0')+':'+String(minVal).padStart(2,'0'),
+      rest: tokens.filter((_,idx)=>!consumed.has(idx)).join(' ').trim()
+    };
+  }
+  return {time:'', rest:t};
+}
+
+function parseFeel(t){
+  if(/плюс[\s-]*мінус/.test(t)) return '±';
+  if(/\bплюс\b/.test(t)) return '+';
+  if(/\bмінус\b/.test(t)) return '-';
+  return '';
+}
+
+function parseVol(t){
+  // Шукаємо число — об'єм. Мінімум 50мл (нижче не має сенсу клінічно
+  // і відсіює "5" з "9:45" якщо щось проскочило).
+  const nums = wordsToNumber(t).map(n=>n.val).filter(v=>v>=50 && v<=2000);
+  if(!nums.length) return '';
+  return String(Math.max(...nums));
+}
+
+function processVoice(text){
+  const t = text.toLowerCase();
+  parsed = null;
+
+  if(/\bвод/.test(t)){
+    // Для води час не потрібен — об'єм з усього тексту
+    parsed = {type:'water', volume:parseVol(t)};
+  } else if(/почат/.test(t)){
+    const pt = parseTime(t);
+    parsed = {type:'start', date:todayStr(), start:pt.time};
+  } else if(/\bкінец|кінець/.test(t)){
+    const pt = parseTime(t);
+    parsed = {type:'end', date:todayStr(), end:pt.time, feel:parseFeel(t), volume:parseVol(pt.rest)};
+  } else {
+    const pt = parseTime(t);
+    parsed = {type:'row', date:todayStr(), start:'', end:pt.time, feel:parseFeel(t), volume:parseVol(pt.rest), water:''};
+  }
+  showParsed();
+}
+
+function showParsed(){
+  if(!parsed) return;
+  const p = parsed;
+  const fc = p.feel==='+'?'cp':p.feel==='-'?'cm':p.feel==='±'?'cpm':'';
+  let html='';
+  if(p.type==='water'){
+    html = `<span class="chip cw"><span class="cl">Вода</span>${p.volume||'?'} мл → останній запис</span>`;
+  } else if(p.type==='start'){
+    html = `<span class="chip ct"><span class="cl">Новий рядок</span></span><span class="chip ct"><span class="cl">Початок</span>${p.start||'?'}</span>`;
+  } else if(p.type==='end'){
+    html = `<span class="chip ct"><span class="cl">Кінець</span>${p.end||'?'}</span><span class="chip ${fc}"><span class="cl">Відч.</span>${p.feel||'?'}</span><span class="chip"><span class="cl">Об'єм</span>${p.volume||'?'} мл</span>`;
+  } else {
+    html = `<span class="chip ct"><span class="cl">Час</span>${p.end||'?'}</span><span class="chip ${fc}"><span class="cl">Відч.</span>${p.feel||'?'}</span><span class="chip"><span class="cl">Об'єм</span>${p.volume||'?'} мл</span>`;
+  }
+  preview.innerHTML = html;
+  preview.classList.add('show');
+  cbtn.classList.add('show');
+}
+
+function confirmVoice(){
+  if(!parsed) return;
+  const p = parsed;
+  if(p.type==='water'){
+    let last=null;
+    for(let i=recs.length-1;i>=0;i--){ if(!recs[i].night){ last=recs[i]; break; } }
+    if(last){
+      last.water = String((parseInt(last.water)||0) + (parseInt(p.volume)||0));
+      save(); renderTable(); showToast('💧 Вода +'+p.volume+' мл');
+    } else showToast('Немає рядка для води','err');
+  } else if(p.type==='start'){
+    recs.push({id:Date.now(),date:p.date,start:p.start,end:'',feel:'',volume:'',water:''});
+    save(); renderTable(); showToast('✓ Початок '+(p.start||'?'));
+  } else if(p.type==='end'){
+    let open=null;
+    for(let i=recs.length-1;i>=0;i--){
+      if(recs[i].date===p.date && recs[i].start && !recs[i].end){ open=recs[i]; break; }
+    }
+    if(open){
+      open.end=p.end; open.feel=p.feel; open.volume=p.volume;
+      save(); renderTable(); showToast('✓ Кінець '+(p.end||'?'));
+    } else {
+      recs.push({id:Date.now(),date:p.date,start:'',end:p.end,feel:p.feel,volume:p.volume,water:''});
+      save(); renderTable(); showToast('✓ Записано');
+    }
+  } else {
+    recs.push({id:Date.now(),date:p.date,start:'',end:p.end,feel:p.feel,volume:p.volume,water:''});
+    save(); renderTable(); showToast('✓ Записано');
+  }
+  parsed = null;
+  preview.classList.remove('show');
+  cbtn.classList.remove('show');
+  trs.textContent = 'Очікування…';
+  finalText = '';
+}
+
+// ── Manual add ────────────────────────────────────────────
+document.getElementById('addBtn').addEventListener('click', ()=>{
+  const s = document.getElementById('iStart').value.trim();
+  const e = document.getElementById('iEnd').value.trim();
+  const v = document.getElementById('iVol').value.trim();
+  const w = document.getElementById('iWater').value.trim();
+  if(!s && !e && !v && !w){ showToast('⚠ Заповни хоч одне поле','err'); return; }
+  recs.push({
+    id: Date.now(),
+    date: document.getElementById('iDate').value.trim() || todayStr(),
+    start:s, end:e, feel:selFeel, volume:v, water:w,
+  });
+  save(); renderTable(); showToast('✓ Додано');
+  ['iStart','iEnd','iVol','iWater'].forEach(id=>document.getElementById(id).value='');
+  selFeel='';
+  document.querySelectorAll('.fbrow .fb[data-feel]').forEach(x=>x.className='fb');
+});
+
+// ── Sorting ───────────────────────────────────────────────
+function timeKey(r){
+  const t = r.start || r.end || '99:99';
+  const m = t.match(/(\d{1,2}):(\d{2})/);
+  return m ? parseInt(m[1])*60+parseInt(m[2]) : 9999;
+}
+function dateKey(d){
+  const m = (d||'').match(/(\d{1,2})\.(\d{1,2})/);
+  if(!m) return 0;
+  return parseInt(m[2])*100 + parseInt(m[1]); // місяць * 100 + день — пізніша дата = більше
+}
+
+// ── Render table (mobile grid, no horizontal scroll) ──────
+function renderTable(){
+  document.getElementById('rc').textContent = recs.length;
+  const wrap = document.getElementById('tbl');
+  const header = `<div class="tbl"><div class="trow head">
+    <div class="tc">Дата</div><div class="tc">Поч.</div><div class="tc">Кін.</div>
+    <div class="tc">Від.</div><div class="tc">Об'єм</div><div class="tc">Вода</div><div class="tc"></div>
+  </div>`;
+  if(!recs.length){
+    wrap.innerHTML = header + '<div class="empty" style="padding:32px 20px;font-size:11px">↑ Натисни «+ Додати рядок»<br>або диктуй голосом</div></div>';
+    return;
+  }
+
+  // Сортуємо: дата desc, час asc всередині дня
+  const sorted = [...recs].sort((a,b)=>{
+    const dd = dateKey(b.date) - dateKey(a.date);
+    if(dd !== 0) return dd;
+    return timeKey(a) - timeKey(b);
+  });
+
+  // Групуємо
+  const dates=[], byDate={};
+  sorted.forEach(r=>{
+    if(!byDate[r.date]){ dates.push(r.date); byDate[r.date]=[]; }
+    byDate[r.date].push(r);
+  });
+
+  let html = `<div class="tbl"><div class="trow head">
+    <div class="tc">Дата</div><div class="tc">Поч.</div><div class="tc">Кін.</div>
+    <div class="tc">Від.</div><div class="tc">Об'єм</div><div class="tc">Вода</div><div class="tc"></div>
+  </div>`;
+
+  dates.forEach(date=>{
+    const rows = byDate[date];
+    let first=true, tv=0, tw=0;
+    rows.forEach(r=>{
+      const fc = r.feel==='+'?'dp':r.feel==='-'?'dm':r.feel==='±'?'dpm':'';
+      tv += parseInt(r.volume)||0;
+      tw += parseInt(r.water)||0;
+      html += `<div class="trow" data-id="${r.id}">
+        <div class="tc ddate editable" data-f="date">${first?date:''}</div>
+        <div class="tc editable" data-f="start">${r.start||''}</div>
+        <div class="tc editable" data-f="end">${r.end||''}</div>
+        <div class="tc ${fc} editable" data-f="feel">${r.feel||''}</div>
+        <div class="tc vol editable" data-f="volume">${r.volume||''}</div>
+        <div class="tc dw editable" data-f="water">${r.water||''}</div>
+        <div class="tc del" data-act="del">×</div>
+      </div>`;
+      first = false;
+    });
+    html += `<div class="trow tot">
+      <div class="tc" style="grid-column:span 4">РАЗОМ ${date} · ${rows.length} епіз.</div>
+      <div class="tc vol">${tv?tv+' мл':''}</div>
+      <div class="tc dw">${tw?tw+' мл':''}</div>
+      <div class="tc"></div>
+    </div>`;
+  });
+
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+// ── Inline edit: delegated, iOS-friendly ──────────────────
+// Підхід: при тапі на іншу клітинку поки одна редагується — спершу синхронно комітимо
+// поточну (оновлюючи лише її DOM, БЕЗ повного renderTable), потім відкриваємо нову.
+let editingCell = null;
+
+document.getElementById('tbl').addEventListener('click', (ev)=>{
+  const cell = ev.target.closest('.tc');
+  if(!cell) return;
+  const row = cell.closest('.trow[data-id]');
+  if(!row) return;
+  const id = parseInt(row.dataset.id);
+
+  if(cell.dataset.act === 'del'){
+    if(editingCell) commitEdit(false);
+    if(confirm('Видалити цей запис?')){
+      recs = recs.filter(r=>r.id!==id);
+      save(); renderTable();
+    }
+    return;
+  }
+  if(cell.classList.contains('editable')){
+    startEdit(cell, id, cell.dataset.f);
+  }
+});
+
+function startEdit(cell, id, field){
+  if(editingCell === cell) return;
+  if(editingCell) commitEdit(true);
+
+  const r = recs.find(x=>x.id===id);
+  if(!r) return;
+
+  editingCell = cell;
+  cell._recId = id;
+  cell._field = field;
+  cell._original = r[field] || '';
+
+  let input;
+  if(field === 'feel'){
+    input = document.createElement('select');
+    [['','—'],['+','+'],['-','−'],['±','±']].forEach(([v,l])=>{
+      const o = document.createElement('option');
+      o.value = v; o.textContent = l;
+      if(v === cell._original) o.selected = true;
+      input.appendChild(o);
+    });
+    input.addEventListener('change', ()=>commitEdit(true));
+  } else {
+    input = document.createElement('input');
+    if(field==='volume' || field==='water'){
+      input.type = 'number';
+      input.inputMode = 'numeric';
+    } else {
+      input.type = 'text';
+      input.inputMode = (field==='start'||field==='end') ? 'numeric' : 'text';
+      input.maxLength = 5;
+    }
+    input.value = cell._original;
+  }
+
+  cell.textContent = '';
+  cell.appendChild(input);
+  setTimeout(()=>{
+    input.focus();
+    if(input.select) try{ input.select(); }catch(e){}
+  }, 30);
+
+  input.addEventListener('blur', ()=>{
+    // Невелика затримка, щоб клік по іншій клітинці встиг встановити editingCell
+    setTimeout(()=>{ if(editingCell === cell) commitEdit(true); }, 50);
+  });
+  input.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ e.preventDefault(); input.blur(); }
+    if(e.key==='Escape'){ cancelEdit(); }
+  });
+}
+
+function commitEdit(updateDom){
+  if(!editingCell) return;
+  const cell = editingCell;
+  const input = cell.querySelector('input,select');
+  if(!input){ editingCell = null; return; }
+  const val = (input.value||'').trim();
+  const r = recs.find(x=>x.id===cell._recId);
+  if(r){ r[cell._field] = val; save(); }
+  editingCell = null;
+  if(updateDom){
+    // Повний рендер потрібен щоб оновити підсумки та сортування
+    renderTable();
+  }
+}
+
+function cancelEdit(){
+  if(!editingCell) return;
+  const cell = editingCell;
+  editingCell = null;
+  renderTable();
+}
+
+// Клік поза таблицею — комітимо
+document.addEventListener('click', (ev)=>{
+  if(!editingCell) return;
+  if(ev.target.closest('.tc') === editingCell) return;
+  if(ev.target.closest('#tbl')) return; // обробляється делегатом
+  commitEdit(true);
+}, true);
+
+// ── Misc actions ──────────────────────────────────────────
+document.getElementById('clrBtn').addEventListener('click', ()=>{
+  if(confirm('Очистити всі записи?')){ recs=[]; save(); renderTable(); }
+});
+
+document.getElementById('csvBtn').addEventListener('click', exportCSV);
+document.getElementById('htmlBtn').addEventListener('click', exportHTML);
+
+function exportCSV(){
+  if(!recs.length){ showToast('Немає даних','err'); return; }
+  const sorted = [...recs].sort((a,b)=>dateKey(b.date)-dateKey(a.date) || timeKey(a)-timeKey(b));
+  let csv = '﻿'+"Дата,Початок,Кінець,Відчуття,Об'єм (мл),Вода (мл)\n";
+  const dates=[], byDate={};
+  sorted.forEach(r=>{ if(!byDate[r.date]){ dates.push(r.date); byDate[r.date]=[]; } byDate[r.date].push(r); });
+  dates.forEach(date=>{
+    let tv=0, tw=0, first=true;
+    byDate[date].forEach(r=>{
+      csv += `${first?date:''},${r.start||''},${r.end||''},${r.feel||''},${r.volume||''},${r.water||''}\n`;
+      tv += parseInt(r.volume)||0; tw += parseInt(r.water)||0; first=false;
+    });
+    csv += `,,,РАЗОМ ${date},${tv||''},${tw||''}\n\n`;
+  });
+  dl('щоденник.csv', csv, 'text/csv;charset=utf-8');
+}
+
+function exportHTML(){
+  if(!recs.length){ showToast('Немає даних','err'); return; }
+  const sorted = [...recs].sort((a,b)=>dateKey(b.date)-dateKey(a.date) || timeKey(a)-timeKey(b));
+  const dates=[], byDate={};
+  sorted.forEach(r=>{ if(!byDate[r.date]){ dates.push(r.date); byDate[r.date]=[]; } byDate[r.date].push(r); });
+  let rows='';
+  dates.forEach(date=>{
+    let tv=0, tw=0, first=true;
+    byDate[date].forEach(r=>{
+      const fc = r.feel==='+'?'color:#3fb950':r.feel==='-'?'color:#f85149':'color:#d29922';
+      rows += `<tr><td style="color:#58a6ff;font-weight:600">${first?date:''}</td><td>${r.start||''}</td><td>${r.end||''}</td><td style="${fc}">${r.feel||''}</td><td>${r.volume?r.volume+' мл':''}</td><td style="color:#79c0ff">${r.water?r.water+' мл':''}</td></tr>`;
+      tv += parseInt(r.volume)||0; tw += parseInt(r.water)||0; first=false;
+    });
+    rows += `<tr style="background:rgba(187,143,206,.12);color:#bb8fce;font-weight:600"><td colspan="3">Разом ${date}</td><td></td><td>${tv?tv+' мл':''}</td><td style="color:#79c0ff">${tw?tw+' мл':''}</td></tr>`;
+  });
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Щоденник сечового</title>
+<style>body{font-family:monospace;background:#0d1117;color:#e6edf3;padding:20px}
+table{border-collapse:collapse;width:100%;background:#161b22;border-radius:8px;overflow:hidden}
+th{background:#1c2128;color:#7d8590;padding:9px 12px;text-align:left;font-size:11px;text-transform:uppercase}
+td{padding:8px 12px;border-bottom:1px solid #30363d;font-size:12px}
+</style></head><body>
+<h2 style="color:#58a6ff;margin-bottom:16px">Щоденник тренування сечового</h2>
+<p style="color:#7d8590;font-size:11px;margin-bottom:14px">Експорт: ${new Date().toLocaleDateString('uk-UA')}</p>
+<table><thead><tr><th>Дата</th><th>Початок</th><th>Кінець</th><th>Відч.</th><th>Об'єм</th><th>Вода</th></tr></thead>
+<tbody>${rows}</tbody></table></body></html>`;
+  dl('щоденник.html', html, 'text/html;charset=utf-8');
+}
+
+function dl(name, content, type){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type}));
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+function showToast(msg, kind){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (kind==='err'?' err':'');
+  setTimeout(()=>{ t.className = 'toast' + (kind==='err'?' err':''); }, 2200);
+}
+
+renderTable();
+</script>
+</body>
+</html>
