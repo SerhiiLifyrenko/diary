@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Щоденник сечового</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;
+  --text:#e6edf3;--muted:#7d8590;--plus:#3fb950;--minus:#f85149;
+  --pm:#d29922;--accent:#58a6ff;--night:#8b949e;--total:#bb8fce;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;min-height:100vh;padding-bottom:60px;}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+header h1{font-size:12px;font-weight:600;color:var(--accent);letter-spacing:.05em;text-transform:uppercase;}
+.badge{font-size:11px;color:var(--muted);background:var(--surface2);padding:4px 10px;border-radius:20px;border:1px solid var(--border);}
+.main{max-width:640px;margin:0 auto;padding:16px 12px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;}
+.sec{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;}
+.hints{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.hint{font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--muted);background:var(--surface2);}
+.vbtn{width:100%;height:64px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:all .2s;}
+.vbtn:hover{border-color:var(--accent);color:var(--accent);}
+.vbtn.on{border-color:var(--minus);background:rgba(248,81,73,.08);color:var(--minus);animation:pulse 1.2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(248,81,73,.3);}50%{box-shadow:0 0 0 8px rgba(248,81,73,0);}}
+.trs{margin-top:10px;min-height:36px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--muted);line-height:1.6;}
+.trs.on{color:var(--text);border-color:var(--accent);}
+.preview{display:none;margin-top:10px;background:var(--bg);border:1px solid var(--plus);border-radius:8px;padding:10px 13px;flex-wrap:wrap;gap:7px;}
+.preview.show{display:flex;}
+.chip{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);}
+.cl{color:var(--muted);margin-right:4px;}
+.cp{border-color:var(--plus);color:var(--plus);}
+.cm{border-color:var(--minus);color:var(--minus);}
+.cpm{border-color:var(--pm);color:var(--pm);}
+.ct{border-color:var(--accent);color:var(--accent);}
+.cw{border-color:var(--night);color:#79c0ff;}
+.cbtn{display:none;width:100%;margin-top:10px;height:42px;background:var(--plus);border:none;border-radius:8px;color:#0d1117;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;cursor:pointer;}
+.cbtn.show{display:block;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.fg label{display:block;font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;}
+.fg input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:7px 9px;outline:none;-webkit-appearance:none;}
+.fg input:focus{border-color:var(--accent);}
+.fbrow{display:flex;gap:6px;margin-bottom:10px;}
+.fb{flex:1;height:36px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:15px;cursor:pointer;}
+.fb.ap{border-color:var(--plus);color:var(--plus);background:rgba(63,185,80,.1);}
+.fb.am{border-color:var(--minus);color:var(--minus);background:rgba(248,81,73,.1);}
+.fb.apm{border-color:var(--pm);color:var(--pm);background:rgba(210,153,34,.1);}
+.addbtn{width:100%;height:40px;background:var(--accent);border:none;border-radius:8px;color:#0d1117;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;cursor:pointer;}
+.tcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.thead2{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);}
+.tbtn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 12px;cursor:pointer;}
+.tbtn:hover{border-color:var(--accent);color:var(--accent);}
+.clr{background:transparent;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:'IBM Plex Mono',monospace;padding:5px 8px;}
+.clr:hover{color:var(--minus);}
+.rc{font-size:11px;color:var(--muted);background:var(--surface2);padding:3px 10px;border-radius:20px;border:1px solid var(--border);}
+.wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:11px;min-width:460px;}
+thead th{background:var(--surface2);color:var(--muted);text-align:left;padding:8px 8px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);font-weight:500;white-space:nowrap;}
+tbody tr{border-bottom:1px solid rgba(48,54,61,.4);}
+tbody tr:hover{background:var(--surface2);}
+tbody td{padding:7px 8px;color:var(--text);}
+.ddate{color:var(--accent);font-weight:600;}
+.dp{color:var(--plus);font-size:14px;}.dm{color:var(--minus);font-size:14px;}.dpm{color:var(--pm);}
+.dw{color:#79c0ff;}
+.da,.dd{color:var(--border);cursor:pointer;text-align:center;padding:7px 5px;}
+.da:hover{color:var(--accent);}.dd:hover{color:var(--minus);}
+tr.tot td{background:rgba(187,143,206,.07);color:var(--total);font-weight:600;border-top:1px solid rgba(187,143,206,.2);border-bottom:2px solid rgba(187,143,206,.25);}
+tr.nrow td{color:var(--night);font-style:italic;}
+.empty{text-align:center;padding:48px 20px;color:var(--muted);font-size:12px;line-height:2.2;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.show{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;width:100%;max-width:360px;}
+.mtitle{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.mgrid .fg label{display:block;font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;}
+.mgrid .fg input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:7px 9px;outline:none;}
+.mgrid .fg input:focus{border-color:var(--accent);}
+.mbtns{display:flex;gap:8px;margin-top:12px;}
+.msave{flex:1;height:40px;background:var(--accent);border:none;border-radius:8px;color:#0d1117;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;cursor:pointer;}
+.mcancel{flex:1;height:40px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:13px;cursor:pointer;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--plus);color:#0d1117;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;padding:10px 22px;border-radius:20px;transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:999;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* Inline edit */
+td.editable{ cursor:pointer; position:relative; }
+td.editable:hover{ background:rgba(88,166,255,.08); }
+td.editable:hover::after{ content:'✎'; position:absolute; right:3px; top:50%; transform:translateY(-50%); font-size:9px; color:var(--accent); opacity:.6; }
+td.editing{ padding:0 !important; }
+td.editing input, td.editing select{
+  width:100%; height:100%; min-height:32px;
+  background:var(--surface2); border:1.5px solid var(--accent);
+  border-radius:0; color:var(--text);
+  font-family:'IBM Plex Mono',monospace; font-size:11px;
+  padding:4px 6px; outline:none; -webkit-appearance:none;
+}
+td.editing select option{ background:var(--surface2); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⬡ Щоденник сечового</h1>
+  <div class="badge" id="dateBadge"></div>
+</header>
+
+<div class="main">
+
+  <div class="card">
+    <div class="sec">🎙 Голосовий ввід</div>
+    <div class="hints">
+      <span class="hint">«Початок 9:00»</span>
+      <span class="hint">«Кінець 9:45 плюс 200»</span>
+      <span class="hint">«Вода 500»</span>
+    </div>
+    <button class="vbtn" id="vbtn" onclick="toggleVoice()">
+      <span style="font-size:22px">🎤</span>
+      <span id="vbtntxt">Натисни та говори</span>
+    </button>
+    <div class="trs" id="trs">Очікування…</div>
+    <div class="preview" id="preview"></div>
+    <button class="cbtn" id="cbtn" onclick="confirmVoice()">✓ Підтвердити</button>
+  </div>
+
+  <div class="card">
+    <div class="sec">✏️ Ручний ввід</div>
+    <div class="grid3">
+      <div class="fg"><label>Дата</label><input id="iDate" maxlength="5" placeholder="19.05"></div>
+      <div class="fg"><label>Початок</label><input id="iStart" maxlength="5" placeholder="9:00"></div>
+      <div class="fg"><label>Кінець</label><input id="iEnd" maxlength="5" placeholder="9:45"></div>
+    </div>
+    <div class="grid2">
+      <div class="fg"><label>Об'єм мл</label><input type="number" id="iVol" placeholder="250"></div>
+      <div class="fg"><label>Вода мл</label><input type="number" id="iWater" placeholder=""></div>
+    </div>
+    <div class="fg" style="margin-bottom:10px">
+      <label>Відчуття</label>
+      <div class="fbrow">
+        <button class="fb" id="fb-plus" onclick="setFeel('+')">+</button>
+        <button class="fb" id="fb-minus" onclick="setFeel('-')">−</button>
+        <button class="fb" id="fb-pm" onclick="setFeel('±')">±</button>
+      </div>
+    </div>
+    <button class="addbtn" onclick="addManual()">+ Додати рядок</button>
+  </div>
+
+  <div class="tcard">
+    <div class="thead2">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="sec" style="margin:0">Записи</div>
+        <span class="rc" id="rc">0</span>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="clr" onclick="clearAll()">очистити</button>
+        <button class="tbtn" onclick="exportCSV()">⬇ CSV</button>
+        <button class="tbtn" onclick="exportHTML()">⬇ HTML</button>
+      </div>
+    </div>
+    <div class="wrap"><div id="tbl"><div class="empty">Немає записів<br>Говори або вводь вручну ↑</div></div></div>
+  </div>
+
+</div>
+
+<div class="modal-bg" id="editModal">
+  <div class="modal">
+    <div class="mtitle">✏️ Редагувати</div>
+    <div class="mgrid">
+      <div class="fg"><label>Дата</label><input id="eDate" maxlength="5"></div>
+      <div class="fg"><label>Початок</label><input id="eStart" maxlength="5"></div>
+      <div class="fg"><label>Кінець</label><input id="eEnd" maxlength="5"></div>
+      <div class="fg"><label>Об'єм мл</label><input id="eVol" type="number"></div>
+      <div class="fg" style="grid-column:span 2"><label>Вода мл</label><input id="eWater" type="number"></div>
+    </div>
+    <div class="fg" style="margin-bottom:4px">
+      <label>Відчуття</label>
+      <div class="fbrow">
+        <button class="fb" id="efb-plus" onclick="setEFeel('+')">+</button>
+        <button class="fb" id="efb-minus" onclick="setEFeel('-')">−</button>
+        <button class="fb" id="efb-pm" onclick="setEFeel('±')">±</button>
+      </div>
+    </div>
+    <div class="mbtns">
+      <button class="mcancel" onclick="closeEdit()">Скасувати</button>
+      <button class="msave" onclick="saveEdit()">Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY = 'bladder_v3';
+let recs = JSON.parse(localStorage.getItem(KEY) || '[]');
+
+const today = new Date();
+document.getElementById('dateBadge').textContent =
+  today.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+function todayStr(){
+  return String(today.getDate()).padStart(2,'0')+'.'+String(today.getMonth()+1).padStart(2,'0');
+}
+document.getElementById('iDate').value = todayStr();
+
+function save(){ localStorage.setItem(KEY, JSON.stringify(recs)); }
+
+// ── Feel buttons ──────────────────────────────────────────
+let selFeel='';
+function setFeel(v){
+  selFeel=v;
+  ['plus','minus','pm'].forEach(k=>document.getElementById('fb-'+k).className='fb');
+  if(v==='+') document.getElementById('fb-plus').classList.add('ap');
+  if(v==='-') document.getElementById('fb-minus').classList.add('am');
+  if(v==='±') document.getElementById('fb-pm').classList.add('apm');
+}
+
+// ── Voice ─────────────────────────────────────────────────
+let recog=null, listening=false, parsed=null;
+
+function toggleVoice(){
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){
+    showToast('Відкрий у Safari'); return;
+  }
+  if(listening){stopVoice();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recog=new SR();
+  recog.lang='uk-UA';recog.continuous=false;recog.interimResults=true;
+  recog.onstart=()=>{
+    listening=true;
+    document.getElementById('vbtn').classList.add('on');
+    document.getElementById('vbtntxt').textContent='Слухаю… (натисни щоб зупинити)';
+    document.getElementById('trs').className='trs on';
+    document.getElementById('trs').textContent='…';
+    document.getElementById('preview').classList.remove('show');
+    document.getElementById('cbtn').classList.remove('show');
+  };
+  recog.onresult=(e)=>{
+    let fin='',inter='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal) fin+=e.results[i][0].transcript;
+      else inter+=e.results[i][0].transcript;
+    }
+    document.getElementById('trs').textContent=fin||inter;
+    if(fin) processVoice(fin.trim());
+  };
+  recog.onerror=(e)=>{stopVoice();if(e.error!=='no-speech')showToast('Помилка: '+e.error);};
+  recog.onend=stopVoice;
+  recog.start();
+}
+
+function stopVoice(){
+  listening=false;
+  if(recog){try{recog.stop();}catch(e){}}
+  document.getElementById('vbtn').classList.remove('on');
+  document.getElementById('vbtntxt').textContent='Натисни та говори';
+  document.getElementById('trs').className='trs';
+}
+
+function parseTime(t){
+  let m=t.match(/(\d{1,2})[:\s](\d{2})/);
+  if(m) return m[1].padStart(2,'0')+':'+m[2];
+  m=t.match(/\b(\d{3,4})\b/);
+  if(m){const s=m[1].padStart(4,'0');return s.slice(0,2)+':'+s.slice(2);}
+  const wh={'нуль':0,'один':1,'два':2,'три':3,'чотири':4,"п'ять":5,'шість':6,'сім':7,
+    'вісім':8,"дев'ять":9,'десять':10,'одинадцять':11,'дванадцять':12,'тринадцять':13,
+    'чотирнадцять':14,"п'ятнадцять":15,'шістнадцять':16,'сімнадцять':17,'вісімнадцять':18,
+    "дев'ятнадцять":19,'двадцять':20};
+  for(const[w,n]of Object.entries(wh)){if(t.includes(w))return String(n).padStart(2,'0')+':00';}
+  return '';
+}
+
+function parseFeel(t){
+  if(t.includes('плюс мінус')||t.includes('плюс-мінус')) return '±';
+  if(/\bплюс\b/.test(t)) return '+';
+  if(/\bмінус\b/.test(t)) return '-';
+  return '';
+}
+
+function parseVol(t){
+  const wv={"п'ятдесят":50,'сто':100,"сто п'ятдесят":150,'двісті':200,
+    "двісті п'ятдесят":250,'триста':300,"триста п'ятдесят":350,'чотириста':400,
+    "чотириста п'ятдесят":450,"п'ятсот":500};
+  for(const[w,n]of Object.entries(wv)){if(t.includes(w))return String(n);}
+  const nums=(t.match(/\d+/g)||[]).filter(n=>parseInt(n)>=20);
+  return nums.sort((a,b)=>parseInt(b)-parseInt(a))[0]||'';
+}
+
+function processVoice(text){
+  const t=text.toLowerCase();
+  parsed=null;
+
+  // ВОДА
+  if(t.includes('вода')){
+    parsed={type:'water',volume:parseVol(t)};
+    showParsed(); return;
+  }
+  // ПОЧАТОК
+  if(t.includes('початок')){
+    parsed={type:'start',date:todayStr(),start:parseTime(t)};
+    showParsed(); return;
+  }
+  // КІНЕЦЬ
+  if(t.includes('кінець')||t.includes('кінец')){
+    parsed={type:'end',date:todayStr(),end:parseTime(t),feel:parseFeel(t),volume:parseVol(t)};
+    showParsed(); return;
+  }
+  // Загальний
+  parsed={type:'row',date:todayStr(),start:'',end:parseTime(t),feel:parseFeel(t),volume:parseVol(t),water:''};
+  showParsed();
+}
+
+function showParsed(){
+  if(!parsed) return;
+  const p=parsed, pr=document.getElementById('preview');
+  pr.innerHTML='';
+  const fc=p.feel==='+'?'cp':p.feel==='-'?'cm':p.feel==='±'?'cpm':'';
+
+  if(p.type==='water'){
+    pr.innerHTML=`<span class="chip cw"><span class="cl">Вода</span>${p.volume} мл → остання строка</span>`;
+  } else if(p.type==='start'){
+    pr.innerHTML=`<span class="chip ct"><span class="cl">Новий рядок</span></span><span class="chip ct"><span class="cl">Початок</span>${p.start||'?'}</span>`;
+  } else if(p.type==='end'){
+    pr.innerHTML=`<span class="chip ct"><span class="cl">Кінець</span>${p.end||'?'}</span><span class="chip ${fc}"><span class="cl">Відч.</span>${p.feel||'?'}</span><span class="chip"><span class="cl">Об'єм</span>${p.volume||'?'} мл</span>`;
+  } else {
+    pr.innerHTML=`<span class="chip ct"><span class="cl">Час</span>${p.end||'?'}</span><span class="chip ${fc}"><span class="cl">Відч.</span>${p.feel||'?'}</span><span class="chip"><span class="cl">Об'єм</span>${p.volume||'?'} мл</span>`;
+  }
+  pr.classList.add('show');
+  document.getElementById('cbtn').classList.add('show');
+}
+
+function confirmVoice(){
+  if(!parsed) return;
+  const p=parsed;
+
+  if(p.type==='water'){
+    // Додати воду до останнього рядка
+    let last=null;
+    for(let i=recs.length-1;i>=0;i--){if(!recs[i].night){last=recs[i];break;}}
+    if(last){
+      last.water=String((parseInt(last.water)||0)+(parseInt(p.volume)||0));
+      save();renderTable();showToast('💧 Вода +'+p.volume+' мл');
+    } else showToast('Немає рядка для води');
+
+  } else if(p.type==='start'){
+    recs.push({id:Date.now(),date:p.date,start:p.start,end:'',feel:'',volume:'',water:''});
+    save();renderTable();showToast('✓ Початок '+p.start);
+
+  } else if(p.type==='end'){
+    // Знайти останній відкритий рядок (є початок, немає кінця)
+    let open=null;
+    for(let i=recs.length-1;i>=0;i--){
+      if(recs[i].date===p.date&&recs[i].start&&!recs[i].end){open=recs[i];break;}
+    }
+    if(open){
+      open.end=p.end;open.feel=p.feel;open.volume=p.volume;
+      save();renderTable();showToast('✓ Кінець '+p.end+' / '+p.volume+' мл');
+    } else {
+      recs.push({id:Date.now(),date:p.date,start:'',end:p.end,feel:p.feel,volume:p.volume,water:''});
+      save();renderTable();showToast('✓ Записано');
+    }
+
+  } else {
+    recs.push({id:Date.now(),date:p.date,start:'',end:p.end,feel:p.feel,volume:p.volume,water:''});
+    save();renderTable();showToast('✓ Записано');
+  }
+
+  parsed=null;
+  document.getElementById('preview').classList.remove('show');
+  document.getElementById('cbtn').classList.remove('show');
+  document.getElementById('trs').textContent='Очікування…';
+}
+
+// ── Manual ────────────────────────────────────────────────
+function addManual(){
+  const s=document.getElementById('iStart').value.trim();
+  const e=document.getElementById('iEnd').value.trim();
+  if(!s&&!e){showToast('⚠ Вкажи час');return;}
+  recs.push({
+    id:Date.now(),
+    date:document.getElementById('iDate').value.trim()||todayStr(),
+    start:s, end:e, feel:selFeel,
+    volume:document.getElementById('iVol').value.trim(),
+    water:document.getElementById('iWater').value.trim(),
+  });
+  save();renderTable();showToast('✓ Додано');
+  ['iStart','iEnd','iVol','iWater'].forEach(id=>document.getElementById(id).value='');
+  selFeel='';
+  ['plus','minus','pm'].forEach(k=>document.getElementById('fb-'+k).className='fb');
+}
+
+// ── Table ─────────────────────────────────────────────────
+
+// ── Inline edit ───────────────────────────────────────────
+function inlineEdit(td, id, field){
+  if(td.classList.contains('editing')) return;
+  const r = recs.find(x=>x.id===id);
+  if(!r) return;
+
+  const cur = r[field] || '';
+  td.classList.add('editing');
+  td.classList.remove('editable');
+
+  let input;
+  if(field==='feel'){
+    input = document.createElement('select');
+    [['','—'],['+','+'],['-','−'],['±','±']].forEach(([v,l])=>{
+      const o=document.createElement('option');
+      o.value=v; o.textContent=l;
+      if(v===cur) o.selected=true;
+      input.appendChild(o);
+    });
+  } else {
+    input = document.createElement('input');
+    input.type = (field==='volume'||field==='water') ? 'number' : 'text';
+    input.value = cur;
+    if(field==='date'||field==='start'||field==='end') input.maxLength=5;
+    input.placeholder = field==='date'?'19.05':field==='start'||field==='end'?'9:00':'';
+  }
+
+  td.innerHTML='';
+  td.appendChild(input);
+  input.focus();
+  if(input.select) input.select();
+
+  function commit(){
+    let val = input.value.trim();
+    r[field] = val;
+    save();
+    renderTable();
+  }
+
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ e.preventDefault(); commit(); }
+    if(e.key==='Escape'){ renderTable(); }
+  });
+}
+
+function renderTable(){
+  document.getElementById('rc').textContent=recs.length;
+  const wrap=document.getElementById('tbl');
+  if(!recs.length){wrap.innerHTML='<div class="empty">Немає записів<br>Говори або вводь вручну ↑</div>';return;}
+
+  // Group by date preserving order
+  const dates=[], byDate={};
+  recs.forEach(r=>{
+    if(!byDate[r.date]){dates.push(r.date);byDate[r.date]=[];}
+    byDate[r.date].push(r);
+  });
+
+  let html=`<table><thead><tr>
+    <th>Дата</th><th>Початок</th><th>Кінець</th><th>Відч.</th><th>Об'єм</th><th>Вода</th><th></th>
+  </tr></thead><tbody>`;
+
+  dates.forEach(date=>{
+    const rows=byDate[date];
+    let first=true, tv=0, tw=0;
+    rows.forEach(r=>{
+      const fc=r.feel==='+'?'dp':r.feel==='-'?'dm':r.feel==='±'?'dpm':'';
+      tv+=parseInt(r.volume)||0;
+      tw+=parseInt(r.water)||0;
+      html+=`<tr class="${r.night?'nrow':''}" data-id="${r.id}">
+        <td class="ddate editable" onclick="inlineEdit(this,${r.id},'date')">${first?date:''}</td>
+        <td class="editable" onclick="inlineEdit(this,${r.id},'start')">${r.start||''}</td>
+        <td class="editable" onclick="inlineEdit(this,${r.id},'end')">${r.end||''}</td>
+        <td class="${fc} editable" onclick="inlineEdit(this,${r.id},'feel')">${r.feel||''}</td>
+        <td class="editable" onclick="inlineEdit(this,${r.id},'volume')">${r.volume||''}</td>
+        <td class="dw editable" onclick="inlineEdit(this,${r.id},'water')">${r.water||''}</td>
+        <td class="dd" onclick="delRec(${r.id})">×</td>
+      </tr>`;
+      first=false;
+    });
+    html+=`<tr class="tot">
+      <td colspan="3" style="font-size:10px;letter-spacing:.05em">РАЗОМ ${date}</td>
+      <td></td>
+      <td>${tv?tv+' мл':''}</td>
+      <td class="dw">${tw?tw+' мл':''}</td>
+      <td></td>
+    </tr>`;
+  });
+
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+
+function delRec(id){recs=recs.filter(r=>r.id!==id);save();renderTable();}
+function clearAll(){if(confirm('Очистити всі записи?')){recs=[];save();renderTable();}}
+
+// ── Edit modal ────────────────────────────────────────────
+let editId=null, eFeel='';
+function openEdit(id){
+  const r=recs.find(x=>x.id===id);if(!r)return;
+  editId=id;eFeel=r.feel||'';
+  document.getElementById('eDate').value=r.date||'';
+  document.getElementById('eStart').value=r.start||'';
+  document.getElementById('eEnd').value=r.end||'';
+  document.getElementById('eVol').value=r.volume||'';
+  document.getElementById('eWater').value=r.water||'';
+  ['plus','minus','pm'].forEach(k=>document.getElementById('efb-'+k).className='fb');
+  if(eFeel==='+') document.getElementById('efb-plus').classList.add('ap');
+  if(eFeel==='-') document.getElementById('efb-minus').classList.add('am');
+  if(eFeel==='±') document.getElementById('efb-pm').classList.add('apm');
+  document.getElementById('editModal').classList.add('show');
+}
+function setEFeel(v){
+  eFeel=v;
+  ['plus','minus','pm'].forEach(k=>document.getElementById('efb-'+k).className='fb');
+  if(v==='+') document.getElementById('efb-plus').classList.add('ap');
+  if(v==='-') document.getElementById('efb-minus').classList.add('am');
+  if(v==='±') document.getElementById('efb-pm').classList.add('apm');
+}
+function closeEdit(){document.getElementById('editModal').classList.remove('show');editId=null;}
+function saveEdit(){
+  if(!editId)return;
+  const idx=recs.findIndex(x=>x.id===editId);if(idx===-1)return;
+  recs[idx].date=document.getElementById('eDate').value.trim();
+  recs[idx].start=document.getElementById('eStart').value.trim();
+  recs[idx].end=document.getElementById('eEnd').value.trim();
+  recs[idx].volume=document.getElementById('eVol').value.trim();
+  recs[idx].water=document.getElementById('eWater').value.trim();
+  recs[idx].feel=eFeel;
+  save();renderTable();closeEdit();showToast('✓ Збережено');
+}
+
+// ── Export ────────────────────────────────────────────────
+function exportCSV(){
+  if(!recs.length){showToast('Немає даних');return;}
+  let csv='\uFEFF'+"Дата,Початок,Кінець,Відчуття,Об'єм (мл),Вода (мл)\n";
+  const dates=[],byDate={};
+  recs.forEach(r=>{if(!byDate[r.date]){dates.push(r.date);byDate[r.date]=[];}byDate[r.date].push(r);});
+  dates.forEach(date=>{
+    let tv=0,tw=0,first=true;
+    byDate[date].forEach(r=>{
+      csv+=`${first?date:''},${r.start||''},${r.end||''},${r.feel||''},${r.volume||''},${r.water||''}\n`;
+      tv+=parseInt(r.volume)||0;tw+=parseInt(r.water)||0;first=false;
+    });
+    csv+=`,,,РАЗОМ ${date},${tv||''},${tw||''}\n\n`;
+  });
+  dl('щоденник.csv',csv,'text/csv;charset=utf-8');
+}
+
+function exportHTML(){
+  if(!recs.length){showToast('Немає даних');return;}
+  const dates=[],byDate={};
+  recs.forEach(r=>{if(!byDate[r.date]){dates.push(r.date);byDate[r.date]=[];}byDate[r.date].push(r);});
+  let rows='';
+  dates.forEach(date=>{
+    let tv=0,tw=0,first=true;
+    byDate[date].forEach(r=>{
+      const fc=r.feel==='+'?'color:#3fb950':r.feel==='-'?'color:#f85149':'color:#d29922';
+      rows+=`<tr><td style="color:#58a6ff;font-weight:600">${first?date:''}</td><td>${r.start||''}</td><td>${r.end||''}</td><td style="${fc}">${r.feel||''}</td><td>${r.volume?r.volume+' мл':''}</td><td style="color:#79c0ff">${r.water?r.water+' мл':''}</td></tr>`;
+      tv+=parseInt(r.volume)||0;tw+=parseInt(r.water)||0;first=false;
+    });
+    rows+=`<tr style="background:rgba(187,143,206,.12);color:#bb8fce;font-weight:600"><td colspan="3">Разом ${date}</td><td></td><td>${tv?tv+' мл':''}</td><td style="color:#79c0ff">${tw?tw+' мл':''}</td></tr>`;
+  });
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Щоденник сечового</title>
+<style>body{font-family:monospace;background:#0d1117;color:#e6edf3;padding:20px}
+table{border-collapse:collapse;width:100%;background:#161b22;border-radius:8px;overflow:hidden}
+th{background:#1c2128;color:#7d8590;padding:9px 12px;text-align:left;font-size:11px;text-transform:uppercase}
+td{padding:8px 12px;border-bottom:1px solid #30363d;font-size:12px}
+</style></head><body>
+<h2 style="color:#58a6ff;margin-bottom:16px">Щоденник тренування сечового</h2>
+<p style="color:#7d8590;font-size:11px;margin-bottom:14px">Експорт: ${new Date().toLocaleDateString('uk-UA')}</p>
+<table><thead><tr><th>Дата</th><th>Початок</th><th>Кінець</th><th>Відч.</th><th>Об'єм</th><th>Вода</th></tr></thead>
+<tbody>${rows}</tbody></table></body></html>`;
+  dl('щоденник.html',html,'text/html;charset=utf-8');
+}
+
+function dl(name,content,type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=name;a.click();
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+renderTable();
+</script>
+</body>
+</html>
